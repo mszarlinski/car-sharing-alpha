@@ -1,0 +1,74 @@
+buildscript {
+    ext {
+        springBootVersion = '2.0.0.M6'
+    }
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+sourceSets {
+    integrationTest {
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+        groovy.srcDir file('src/integrationTest/groovy')
+        resources.srcDir file('src/integrationTest/resources')
+    }
+}
+
+dependencies {
+    compile('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
+    compile('org.springframework.boot:spring-boot-starter-webflux')
+    compile('io.projectreactor.rabbitmq:reactor-rabbitmq:1.0.0.M1')
+
+    compileOnly('org.projectlombok:lombok')
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+//	testCompile('io.projectreactor:reactor-test')
+
+    testCompile group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.4'
+	testCompile group: 'cglib', name: 'cglib-nodep', version: '3.2.5'
+
+    integrationTestCompile group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.4'
+    integrationTestCompile group: 'org.spockframework', name: 'spock-spring', version: '1.0-groovy-2.4'
+    integrationTestCompile 'org.springframework.boot:spring-boot-starter-test:1.4.0.RELEASE'
+
+    integrationTestCompile group: 'de.flapdoodle.embed', name: 'de.flapdoodle.embed.mongo', version: '2.0.0'
+    integrationTestCompile group: 'io.arivera.oss', name: 'embedded-rabbitmq', version: '1.2.1'
+
+    //	integrationTestCompile(group: 'com.xebialabs.restito', name: 'restito', version: "0.7") {
+//		exclude group: 'com.sun.jersey', module: 'jersey-server'
+//	}
+}
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+}
+
+check.dependsOn integrationTest
